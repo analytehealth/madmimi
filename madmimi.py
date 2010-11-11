@@ -311,34 +311,53 @@ class MadMimi(object):
         else:
             return parse_lists(response)
 
-    def send_message(self, name, email, promotion, subject, sender, body={}):
+    def send_message(self, name, email, promotion, subject, sender, body={},
+            raw_html=None, raw_plain_text=None):
         """Sends a message to a user.
-
+        
         Arguments:
             name: Name of the person you are sending to.
             email: Email address of the person you are sending to.
             promotion: Name of the Mad Mimi promotion to send.
             subject: Subject of the email.
             sender: Email address the email should appear to be from.
-            body: Dict holding variables for the promotion template.
+            
+            Only one of body, raw_html or raw_plain_text should be provided.
+            Order of preference is html, plain text, body.
+            body: Optional. Dict holding variables for the promotion template.
                     {'variable': 'Replcement value'}
-
+            raw_html: Optional. If you want to send a message where the
+                promotion doesn't already exist. Make sure the promotion
+                name is unique.
+            raw_plain_text: Optional. Same as raw_html except it is plain
+                text.
+        
         Returns:
             The transaction id of the message if successful.
             The error if unsuccessful.
         """
-
-        # The YAML dump will fail if it encounters non-strings
-        for item, value in body.iteritems():
-            body[item] = str(value)
-
         recipients = "%s <%s>" % (name, email)
-        body = dump(body)
-
-        return self._post('mailer', promotion_name=promotion,
-                recipients=recipients, subject=subject, sender=sender,
-                body=body, is_secure=True)
-
+        
+        if raw_html:
+            post = self._post('mailer', promotion_name=promotion,
+                    recipients=recipients, subject=subject, sender=sender,
+                    raw_html=raw_html, is_secure=True)
+        elif raw_plain_text:
+            post = self._post('mailer', promotion_name=promotion,
+                    recipients=recipients, subject=subject, sender=sender,
+                    raw_plain_text=raw_plain_text, is_secure=True)
+        else:
+            # The YAML dump will fail if it encounters non-strings
+            for item, value in body.iteritems():
+                body[item] = str(value)
+            body = dump(body)
+            
+            post = self._post('mailer', promotion_name=promotion,
+                    recipients=recipients, subject=subject, sender=sender,
+                    body=body, is_secure=True)
+        
+        return post
+    
     def send_message_to_list(self, list_name, promotion, body={}):
         """Send a promotion to a subscriber list.
 

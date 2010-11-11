@@ -70,6 +70,8 @@ class MadMimiTest(unittest.TestCase):
         self.audience_lists = [(1, 'Dinosaur', '71056')]
         self.list_name = 'PyMadMimi Test List'
         self.body = {'abc': 123}
+        self.raw_html = '<html><body>Test message.</body></html>'
+        self.raw_plain_text = 'Test message.'
         self.expected_args = {
             'username': self.email,
             'api_key': self.api_key
@@ -169,7 +171,7 @@ class MadMimiTest(unittest.TestCase):
         self.mimi.urlopen.return_value.write(expected_response)
         self.mimi.urlopen.return_value.seek(0)
         
-        response = self.mimi.subscriptions(self.recipient)
+        response = self.mimi.subscriptions(self.recipient, as_xml=True)
         expected_args = urlencode(self.expected_args)
         expected_url = '%saudience_members/%s/lists.xml?%s' % (
                 self.mimi.base_url, quote(self.recipient), expected_args)
@@ -208,6 +210,78 @@ class MadMimiTest(unittest.TestCase):
         self.assertEqual(self.email, called_username)
         self.assertEqual(self.api_key, called_api_key)
         self.assertEqual(self.body, yaml.load(called_body))
+        self.assertEqual(self.promotion, called_promotion)
+        self.assertEqual(self.subject, called_subject)
+        self.assertEqual(self.sender, called_sender)
+        self.assertEqual(expected_recipients, called_recipients)
+    
+    def test_send_message_html(self):
+        """Test that send_message works when sending a new html message."""
+
+        expected_response = '12341234'
+        self.mimi.urlopen.return_value = StringIO()
+        self.mimi.urlopen.return_value.write(expected_response)
+        self.mimi.urlopen.return_value.seek(0)
+
+        response = self.mimi.send_message(self.recipient_name, self.recipient,
+                self.promotion, self.subject, self.sender,
+                raw_html=self.raw_html)
+
+        expected_url = '%smailer' % self.mimi.secure_base_url
+        expected_recipients = '%s <%s>' % (
+                self.recipient_name, self.recipient)
+
+        called_url = self.mimi.urlopen.call_args[0][0]
+        called_args = parse_qs(urlparse(self.mimi.urlopen.call_args[0][1])[2])
+        called_username = called_args['username'][0]
+        called_api_key = called_args['api_key'][0]
+        called_html = called_args['raw_html'][0]
+        called_promotion = called_args['promotion_name'][0]
+        called_subject = called_args['subject'][0]
+        called_sender = called_args['sender'][0]
+        called_recipients = called_args['recipients'][0]
+
+        self.assertEqual(expected_response, response)
+        self.assertEqual(expected_url, called_url)
+        self.assertEqual(self.email, called_username)
+        self.assertEqual(self.api_key, called_api_key)
+        self.assertEqual(self.raw_html, yaml.load(called_html))
+        self.assertEqual(self.promotion, called_promotion)
+        self.assertEqual(self.subject, called_subject)
+        self.assertEqual(self.sender, called_sender)
+        self.assertEqual(expected_recipients, called_recipients)
+
+    def test_send_message_plain_text(self):
+        """Test that send_message results in a properly formatted post."""
+
+        expected_response = '12341234'
+        self.mimi.urlopen.return_value = StringIO()
+        self.mimi.urlopen.return_value.write(expected_response)
+        self.mimi.urlopen.return_value.seek(0)
+
+        response = self.mimi.send_message(self.recipient_name, self.recipient,
+                self.promotion, self.subject, self.sender,
+                raw_plain_text=self.raw_plain_text)
+
+        expected_url = '%smailer' % self.mimi.secure_base_url
+        expected_recipients = '%s <%s>' % (
+                self.recipient_name, self.recipient)
+
+        called_url = self.mimi.urlopen.call_args[0][0]
+        called_args = parse_qs(urlparse(self.mimi.urlopen.call_args[0][1])[2])
+        called_username = called_args['username'][0]
+        called_api_key = called_args['api_key'][0]
+        called_plain_text = called_args['raw_plain_text'][0]
+        called_promotion = called_args['promotion_name'][0]
+        called_subject = called_args['subject'][0]
+        called_sender = called_args['sender'][0]
+        called_recipients = called_args['recipients'][0]
+
+        self.assertEqual(expected_response, response)
+        self.assertEqual(expected_url, called_url)
+        self.assertEqual(self.email, called_username)
+        self.assertEqual(self.api_key, called_api_key)
+        self.assertEqual(self.raw_plain_text, yaml.load(called_plain_text))
         self.assertEqual(self.promotion, called_promotion)
         self.assertEqual(self.subject, called_subject)
         self.assertEqual(self.sender, called_sender)
