@@ -28,6 +28,7 @@ __author__ = ('tav@espians.com (tav),'
 __maintainer__ = 'jordan.bouvier@analytemedia.com (Jordan Bouvier)'
 
 import csv
+import logging
 
 try:
     from cStringIO import StringIO
@@ -150,6 +151,8 @@ class MadMimi(object):
         self.api_key = api_key
 
         self.urlopen = urlopen
+        self.logger = logging.getLogger('madmimi')
+        self.logger.setLevel(logging.WARNING)
 
     def _get(self, method, **params):
         """Issue a GET request to Madmimi.
@@ -171,8 +174,11 @@ class MadMimi(object):
         params['username'] = self.username
         params['api_key'] = self.api_key
         url = url + method + '?' + urlencode(params)
+        self.logger.debug('get url: %s' % url)
 
-        return self.urlopen(url).read()
+        response = self.urlopen(url).read()
+        self.logger.debug('response: %s' % response)
+        return response
 
     def _post(self, method, **params):
         """Issue a POST request to Madmimi.
@@ -195,8 +201,13 @@ class MadMimi(object):
         params['api_key'] = self.api_key
         if params.get('sender'):
             params['from'] = params['sender']
+        
+        self.logger.debug('post url: %s' % url)
+        self.logger.debug('params: %s' % params)
 
-        return self.urlopen(url, urlencode(params)).read()
+        response = self.urlopen(url, urlencode(params)).read()
+        self.logger.debug('response: %s' % response)
+        return response
 
     def lists(self, as_xml=False):
         """Get a list of audience lists.
