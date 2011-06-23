@@ -49,7 +49,7 @@ except ImportError:
         except ImportError:
             from elementtree import ElementTree
 
-from yaml import dump
+from yaml import dump, safe_dump
 
 
 DEFAULT_CONTACT_FIELDS = ('first name', 'last_name', 'email', 'tags')
@@ -361,7 +361,7 @@ class MadMimi(object):
             # The YAML dump will fail if it encounters non-strings
             for item, value in body.iteritems():
                 body[item] = str(value)
-            body = dump(body)
+            body = safe_dump(body) # to avoid !!python/str tags by dump(body)
             
             post = self._post('mailer', promotion_name=promotion,
                     recipients=recipients, subject=subject, sender=sender,
@@ -387,7 +387,7 @@ class MadMimi(object):
         for item, value in body.iteritems():
             body[item] = str(value)
 
-        body = dump(body)
+        body = safe_dump(body) # to avoid !!python/str tags by dump(body)
 
         return self._post('mailer/to_list', promotion_name=promotion,
                 list_name=list_name, body=body, is_secure=True)
