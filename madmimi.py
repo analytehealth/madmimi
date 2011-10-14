@@ -27,6 +27,7 @@ __author__ = ('tav@espians.com (tav),'
         'jordan.bouvier@analytemedia.com (Jordan Bouvier)')
 __maintainer__ = 'jordan.bouvier@analytemedia.com (Jordan Bouvier)'
 
+from datetime import datetime
 import csv
 import logging
 
@@ -366,9 +367,9 @@ class MadMimi(object):
             post = self._post('mailer', promotion_name=promotion,
                     recipients=recipients, subject=subject, sender=sender,
                     body=body, is_secure=True)
-        
+
         return post
-    
+
     def send_message_to_list(self, list_name, promotion, body={}):
         """Send a promotion to a subscriber list.
 
@@ -391,6 +392,28 @@ class MadMimi(object):
 
         return self._post('mailer/to_list', promotion_name=promotion,
                 list_name=list_name, body=body, is_secure=True)
+
+    def send_message_to_all(self, promotion, body={}):
+        """Send a promotion to all subscribers.
+
+        Arguments:
+            promotion: Name of the Mad Mimi promotion to send.
+            body: Dict holding variables for the promotion template.
+                    {'variable': 'Replcement value'}
+
+        Returns:
+            The transaction id of the message if successful.
+            The error if unsuccessful.
+        """
+
+        # The YAML dump will fail if it encounters non-strings
+        for item, value in body.iteritems():
+            body[item] = str(value)
+
+        body = safe_dump(body) # to avoid !!python/str tags by dump(body)
+
+        return self._post('mailer/to_all', promotion_name=promotion,
+                          body=body, is_secure=True)
 
     def message_status(self, transaction_id):
         """Get the status of a message.
@@ -427,6 +450,55 @@ class MadMimi(object):
         url = 'audience_members/suppressed_since/%s.txt' % date.strftime('%s')
 
         return self._get(url)
+
+    def promotion(self, promotion_id):
+        """Get XML data about a single promotion by promotion id.
+        
+        Arguments:
+            promotion_id: The promotion id.
+        """
+        url = 'promotions/search.xml'
+        return self._get(url, id=promotion_id)
+
+    def promotion_search(self, query=None, from_date=None, to_date=None):
+        """Search for promotions. Returns XML.
+        
+        Arguments:
+            query: A string to search promotion names by.
+            from_date: The beginning date to search by.
+            to_date: The end date to search until. If specified, from_date
+                     is required.
+        """
+        if not any([query, from_date, to_date]):
+            raise ValueError('Invalid arguments.')
+        if from_date and not isinstance(from_date, datetime):
+            raise ValueError('from_date must be a datetime object.')
+        if to_date and not isinstance(to_date, datetime):
+            raise ValueError('to_date must be a datetime object.')
+        if from_date and not to_date:
+            to_date = datetime.now()
+        elif to_date and not from_date:
+            raise ValueError('Must specify from_date.')
+
+        params = {}
+        if query:
+            params['query'] = query
+        if from_date:
+            params['date'] = 1
+            params['from_date'] = from_date.strftime('%Y-%m-%d %H:%M:%S')
+            params['to_date'] = to_date.strftime('%Y-%m-%d %H:%M:%S')
+
+        url = 'promotions/search.xml'
+        return self._get(url, **params)
+
+    def promotion_trash(self, promotion_id):
+        """Deletes a promotion.
+        
+        Arguments:
+            promotion_id: The id of the promotion to delete.
+        """
+        url = 'promotions/%s/trash' % promotion_id
+        return self._post(url)
 
     def promotion_stats(self):
         """Get an XML document containing stats for all your promotions."""

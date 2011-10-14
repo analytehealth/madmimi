@@ -316,6 +316,31 @@ class MadMimiTest(unittest.TestCase):
         self.assertEqual(self.promotion, called_promotion)
         self.assertEqual(self.list_name, called_list_name)
     
+    def test_send_message_to_all(self):
+        """Test that send_message_to_all results in proper post."""
+        expected_response = '12341234'
+        self.mimi.urlopen.return_value = StringIO()
+        self.mimi.urlopen.return_value.write(expected_response)
+        self.mimi.urlopen.return_value.seek(0)
+
+        response = self.mimi.send_message_to_all(self.promotion, self.body)
+
+        expected_url = '%smailer/to_all' % self.mimi.secure_base_url
+
+        called_url = self.mimi.urlopen.call_args[0][0]
+        called_args = parse_qs(urlparse(self.mimi.urlopen.call_args[0][1])[2])
+        called_username = called_args['username'][0]
+        called_api_key = called_args['api_key'][0]
+        called_body = called_args['body'][0]
+        called_promotion = called_args['promotion_name'][0]
+
+        self.assertEqual(expected_response, response)
+        self.assertEqual(expected_url, called_url)
+        self.assertEqual(self.email, called_username)
+        self.assertEqual(self.api_key, called_api_key)
+        self.assertEqual(self.body, yaml.load(called_body))
+        self.assertEqual(self.promotion, called_promotion)
+
     def test_message_status(self):
         """Test that message_status results in a proper url."""
         
@@ -348,13 +373,17 @@ class MadMimiTest(unittest.TestCase):
     
     def test_promotion_stats(self):
         """Test that promotion_stats results in a proper url."""
-        
         self.mimi.promotion_stats()
-        
         expected_url = '%spromotions.xml?%s' % (self.mimi.base_url,
                 urlencode(self.expected_args))
         self.mimi.urlopen.assert_called_with(expected_url)
-    
+
+    def test_promotion(self):
+        """Test that the promotion results in the correct url."""
+        self.mimi.promotion('12345')
+        self.expected_args['id'] = '12345'
+        expected_url = '%spromotions/search.xml?%s' % (
+            self.mimi.base_url, urlencode(self.expected_args))
 
 def generate_lists(audience_lists):
     """Helper for returning dynamic lists."""
