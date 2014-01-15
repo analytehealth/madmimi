@@ -385,6 +385,13 @@ class MadMimiTest(unittest.TestCase):
         expected_url = '%spromotions/search.xml?%s' % (
             self.mimi.base_url, urlencode(self.expected_args))
 
+    def test_search_audience(self):
+        """Test that the promotion results in the correct url."""
+        self.mimi.search_audience('@analytehealth.com')
+        self.expected_args['query'] = '@analytehealth.com'
+        expected_url = '%saudience_members/search.xml?%s' % (
+            self.mimi.base_url, urlencode(self.expected_args))
+
 def generate_lists(audience_lists):
     """Helper for returning dynamic lists."""
     lists = ['<lists>\n']

@@ -504,3 +504,11 @@ class MadMimi(object):
         """Get an XML document containing stats for all your promotions."""
 
         return self._get('promotions.xml')
+
+    def search_audience(self, query):
+        """Get an XML document containing up to 100 audience members matching
+           the search query."""
+
+        params = {}
+        params['query'] = query
+        return self._get('/audience_members/search.xml', **params)
