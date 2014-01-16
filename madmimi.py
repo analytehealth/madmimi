@@ -273,6 +273,20 @@ class MadMimi(object):
 
         self._post('audience_members', csv_file=csvdata.getvalue())
 
+    def suppress_contact(self, email):
+        """Suppress an audience member, so emails cannot be sent to them. 
+           Suppressed audience members do not count toward your audience limit.
+           There is no way to delete audience members through the api.
+
+        Arguments:
+            email: The email address to suppress.
+
+        Returns:
+            Nothing.
+        """
+
+        self._post('audience_members/%s/suppress_email' % quote(email))
+
     def subscribe(self, email, audience_list):
         """Add an audience member to an audience list.
 
@@ -322,6 +336,14 @@ class MadMimi(object):
             return response
         else:
             return parse_lists(response)
+
+    def search_audience(self, query):
+        """Get an XML document containing up to 100 audience members matching
+           the search query."""
+
+        params = {}
+        params['query'] = query
+        return self._get('/audience_members/search.xml', **params)
 
     def send_message(self, name, email, promotion, subject, sender, body={},
             raw_html=None, raw_plain_text=None):
@@ -504,11 +526,3 @@ class MadMimi(object):
         """Get an XML document containing stats for all your promotions."""
 
         return self._get('promotions.xml')
-
-    def search_audience(self, query):
-        """Get an XML document containing up to 100 audience members matching
-           the search query."""
-
-        params = {}
-        params['query'] = query
-        return self._get('/audience_members/search.xml', **params)
