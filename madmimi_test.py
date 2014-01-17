@@ -387,14 +387,14 @@ class MadMimiTest(unittest.TestCase):
 
     def test_search_audience(self):
         """Test that the search api call results in the correct url."""
-        self.mimi.search_audience('@analytehealth.com')
-        self.expected_args['query'] = '@analytehealth.com'
+        self.mimi.search_audience('@example.com')
+        self.expected_args['query'] = '@example.com'
         expected_url = '%saudience_members/search.xml?%s' % (
             self.mimi.base_url, urlencode(self.expected_args))
 
     def test_suppress_contact(self):
         """Test that the suppress api call results in the correct url."""
-        email = 'somebody@analytehealth.com'
+        email = 'somebody@example.com'
         self.mimi.suppress_contact(email)
         expected_url = '%saudience_members/%s/suppress_email' % (
             self.mimi.base_url, quote(email))
