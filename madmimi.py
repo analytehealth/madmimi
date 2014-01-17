@@ -254,6 +254,8 @@ class MadMimi(object):
 
     def add_contacts(self, contacts_data, fields=DEFAULT_CONTACT_FIELDS):
         """Add audience members to your database.
+           Note: uploading contacts with an 'opt out' column set to 1 will
+           suppress them in bulk.
 
         Arguments:
             contacts_data: A list of tuples containting contact data.
